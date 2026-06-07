@@ -55,6 +55,15 @@ const db = {
     data.responses.push(response);
     write(data);
   },
+  addReply: (responseId, reply, repliedAt) => {
+    const data = read();
+    const idx = data.responses.findIndex(r => r.id === responseId);
+    if (idx === -1) return null;
+    data.responses[idx].reply = reply;
+    data.responses[idx].repliedAt = repliedAt;
+    write(data);
+    return data.responses[idx];
+  },
 };
 
 module.exports = db;

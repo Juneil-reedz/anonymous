@@ -127,6 +127,20 @@ app.get('/api/links/:id/responses', auth, wrap((req, res) => {
   res.json({ responses });
 }));
 
+app.post('/api/links/:linkId/responses/:responseId/reply', auth, wrap((req, res) => {
+  const { reply } = req.body || {};
+  if (!reply?.trim()) return res.status(400).json({ error: 'Reply cannot be empty' });
+  if (reply.trim().length > 300) return res.status(400).json({ error: 'Reply too long (max 300 chars)' });
+
+  const link = db.findLinkById(req.params.linkId);
+  if (!link || link.userId !== req.user.id) return res.status(404).json({ error: 'Not found' });
+
+  const updated = db.addReply(req.params.responseId, reply.trim(), new Date().toISOString());
+  if (!updated) return res.status(404).json({ error: 'Response not found' });
+
+  res.json({ response: updated });
+}));
+
 // ── Public respond routes ─────────────────────────────────────────────────────
 app.get('/api/r/:code', wrap((req, res) => {
   const link = db.findLinkByCode(req.params.code.toUpperCase());
