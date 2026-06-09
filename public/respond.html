@@ -346,6 +346,7 @@
       rateMe:            { emoji: '⭐', title: 'Rate Me',               question: "Rate me out of 10. Justify your score.",          placeholder: "X/10 because…",                                   color: '#0369A1' },
       confess:           { emoji: '🤫', title: 'Confess',               question: "Confess something to me anonymously.",            placeholder: "Get it off your chest…",                          color: '#065F46' },
       unpopularOpinion:  { emoji: '💬', title: 'Unpopular Opinion',     question: "Share an unpopular opinion about me.",            placeholder: "Say what others won't…",                          color: '#92400E' },
+      customPrompt:      { emoji: '✏️', title: 'Anonymous Question',    question: '',                                                placeholder: "Type your response here…",                        color: '#C9A87C' },
     };
 
     const code = location.pathname.split('/').pop().toUpperCase();
@@ -374,11 +375,15 @@
 
     function render(link) {
       const t = PROMPTS[link.promptTypeKey] || PROMPTS.roastMe;
-      document.title = `${t.emoji} ${t.title} — Anonymous`;
+      const question = (link.promptTypeKey === 'customPrompt' && link.customQuestion)
+        ? link.customQuestion
+        : t.question;
+      document.title = `${t.emoji} ${link.username} — Anonymous`;
       document.getElementById('prompt-emoji').textContent = t.emoji;
-      document.getElementById('prompt-title').textContent = t.title;
+      document.getElementById('prompt-title').textContent =
+        link.promptTypeKey === 'customPrompt' ? 'Anonymous Question' : t.title;
       document.getElementById('prompt-username').textContent = '@' + link.username;
-      document.getElementById('prompt-question').textContent = t.question;
+      document.getElementById('prompt-question').textContent = question;
       document.getElementById('message').placeholder = t.placeholder;
       const card = document.getElementById('prompt-card');
       card.style.background = hexToRgba(t.color, 0.12);

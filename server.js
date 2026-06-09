@@ -96,16 +96,22 @@ app.post('/api/login', wrap((req, res) => {
 
 // ── Link routes ───────────────────────────────────────────────────────────────
 app.post('/api/links', auth, wrap((req, res) => {
-  const { promptTypeKey } = req.body || {};
+  const { promptTypeKey, customQuestion } = req.body || {};
   if (!promptTypeKey) return res.status(400).json({ error: 'promptTypeKey required' });
+  if (promptTypeKey === 'customPrompt') {
+    if (!customQuestion?.trim()) return res.status(400).json({ error: 'Custom prompt requires a question' });
+    if (customQuestion.trim().length > 200) return res.status(400).json({ error: 'Question too long (max 200 chars)' });
+  }
 
   const code = uniqueCode();
   const id = uuidv4();
   const now = new Date().toISOString();
 
-  db.createLink({ id, userId: req.user.id, username: req.user.username, promptTypeKey, shareCode: code, isActive: true, createdAt: now });
+  const linkData = { id, userId: req.user.id, username: req.user.username, promptTypeKey, shareCode: code, isActive: true, createdAt: now };
+  if (customQuestion?.trim()) linkData.customQuestion = customQuestion.trim();
 
-  res.json({ link: { id, userId: req.user.id, username: req.user.username, promptTypeKey, shareCode: code, isActive: true, responseCount: 0, createdAt: now } });
+  db.createLink(linkData);
+  res.json({ link: { ...linkData, responseCount: 0 } });
 }));
 
 app.get('/api/links', auth, wrap((req, res) => {
