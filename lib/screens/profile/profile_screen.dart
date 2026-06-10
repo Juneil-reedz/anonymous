@@ -1096,19 +1096,31 @@ class _ProfileCardStack extends StatelessWidget {
               dy: 5,
               angle: -0.13,
             ),
-            // Front card — near-black with leaf+eye or avatar
+            // Front card — avatar fills card, or leaf+eye when no photo
             _card(
               color: const Color(0xFF0D0904),
-              hasBorder: true,
+              hasBorder: avatarBase64 == null,
               child: Stack(
                 children: [
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: _LeafContent(
-                          avatarBase64: avatarBase64, leafH: 88),
+                  if (avatarBase64 != null)
+                    // Photo fills the entire card
+                    Positioned.fill(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(18),
+                        child: Image.memory(
+                          base64Decode(avatarBase64!),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    )
+                  else
+                    // No photo — show leaf+eye motif centred
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: _LeafContent(avatarBase64: null, leafH: 88),
+                      ),
                     ),
-                  ),
                   // Camera badge
                   Positioned(
                     right: 10,
@@ -1120,7 +1132,8 @@ class _ProfileCardStack extends StatelessWidget {
                         color: AnonTheme.primaryLight,
                         shape: BoxShape.circle,
                         border: Border.all(
-                            color: const Color(0xFF0D0904), width: 2),
+                            color: Colors.black.withValues(alpha: 0.5),
+                            width: 2),
                       ),
                       child: saving
                           ? const Padding(
