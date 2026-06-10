@@ -21,6 +21,8 @@ class AppProvider extends ChangeNotifier {
   String? get error => _error;
   int get totalResponses =>
       _links.fold(0, (sum, l) => sum + l.responseCount);
+  int get totalUnread =>
+      _links.fold(0, (sum, l) => sum + l.unreadCount);
 
   Future<void> init() async {
     // Wake Render's free-tier server; ignore errors
@@ -152,9 +154,11 @@ class AppProvider extends ChangeNotifier {
           .toList();
       final idx = _links.indexWhere((l) => l.id == linkId);
       if (idx != -1) {
-        _links[idx] = _links[idx].copyWith(responseCount: responses.length);
+        _links[idx] = _links[idx].copyWith(responseCount: responses.length, unreadCount: 0);
         notifyListeners();
       }
+      // Mark all as read in background — don't await, don't block UI
+      ApiService.put('/api/links/$linkId/mark-read', {}).catchError((_) => <String, dynamic>{});
       return responses;
     } catch (e) {
       _error = e.toString();
@@ -223,6 +227,21 @@ class AppProvider extends ChangeNotifier {
       _error = e.toString();
       notifyListeners();
       return false;
+    }
+  }
+
+  Future<String?> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      await ApiService.post('/api/change-password', {
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      });
+      return null;
+    } catch (e) {
+      return e.toString();
     }
   }
 

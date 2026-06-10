@@ -175,6 +175,7 @@ class PromptLink {
   final DateTime createdAt;
   final bool isActive;
   final int responseCount;
+  final int unreadCount;
   final String? customQuestion;
 
   const PromptLink({
@@ -186,6 +187,7 @@ class PromptLink {
     required this.createdAt,
     this.isActive = true,
     this.responseCount = 0,
+    this.unreadCount = 0,
     this.customQuestion,
   });
 
@@ -209,7 +211,7 @@ class PromptLink {
     return PromptTemplate.fromKey(promptTypeKey);
   }
 
-  PromptLink copyWith({int? responseCount, bool? isActive}) => PromptLink(
+  PromptLink copyWith({int? responseCount, int? unreadCount, bool? isActive}) => PromptLink(
         id: id,
         userId: userId,
         username: username,
@@ -218,6 +220,7 @@ class PromptLink {
         createdAt: createdAt,
         isActive: isActive ?? this.isActive,
         responseCount: responseCount ?? this.responseCount,
+        unreadCount: unreadCount ?? this.unreadCount,
         customQuestion: customQuestion,
       );
 
@@ -242,6 +245,7 @@ class PromptLink {
         createdAt: DateTime.parse(json['createdAt'] as String),
         isActive: json['isActive'] as bool? ?? true,
         responseCount: json['responseCount'] as int? ?? 0,
+        unreadCount: json['unreadCount'] as int? ?? 0,
         customQuestion: json['customQuestion'] as String?,
       );
 }

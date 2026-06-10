@@ -255,7 +255,28 @@ class _VaultHeader extends StatelessWidget {
                           label: 'RESPONSES',
                           accent: resp > 0,
                         ),
-                        if (resp > 0) ...[
+                        if (provider.totalUnread > 0) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AnonTheme.primary.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                  color: AnonTheme.primary.withValues(alpha: 0.5)),
+                            ),
+                            child: Text(
+                              '${provider.totalUnread} NEW',
+                              style: const TextStyle(
+                                color: AnonTheme.primary,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                          ),
+                        ] else if (resp > 0) ...[
                           const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -431,12 +452,15 @@ class _LinkRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final template = link.template;
     final hasResponses = link.responseCount > 0;
+    final hasUnread = link.unreadCount > 0;
 
     return GestureDetector(
       onTap: onViewInbox,
       child: Container(
         decoration: BoxDecoration(
-          color: AnonTheme.card,
+          color: hasUnread
+              ? template.color.withValues(alpha: 0.04)
+              : AnonTheme.card,
           border: Border(
             bottom: BorderSide(color: AnonTheme.cardBorder, width: 1),
           ),
@@ -445,28 +469,56 @@ class _LinkRow extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Left color rule
-              Container(width: 3, color: template.color),
-
-              // Number column
+              // Left color rule — brighter when unread
               Container(
-                width: 48,
-                alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                decoration: BoxDecoration(
-                  border: Border(
-                    right: BorderSide(color: AnonTheme.cardBorder, width: 1),
+                  width: hasUnread ? 4 : 3,
+                  color: hasUnread
+                      ? template.color
+                      : template.color.withValues(alpha: 0.5)),
+
+              // Number column with unread dot badge
+              Stack(
+                children: [
+                  Container(
+                    width: 48,
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        right: BorderSide(color: AnonTheme.cardBorder, width: 1),
+                      ),
+                    ),
+                    child: Text(
+                      cardNumber,
+                      style: TextStyle(
+                        color: template.color,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1,
+                      ),
+                    ),
                   ),
-                ),
-                child: Text(
-                  cardNumber,
-                  style: TextStyle(
-                    color: template.color,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1,
-                  ),
-                ),
+                  if (hasUnread)
+                    Positioned(
+                      top: 10,
+                      right: 8,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: template.color,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: template.color.withValues(alpha: 0.6),
+                              blurRadius: 6,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
               ),
 
               // Main content
@@ -557,44 +609,67 @@ class _LinkRow extends StatelessWidget {
                       // Bottom meta row
                       Row(
                         children: [
-                          // Response badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: hasResponses
-                                  ? template.color.withValues(alpha: 0.15)
-                                  : AnonTheme.surface,
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(
+                          // Response / unread badge
+                          if (hasUnread)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: template.color.withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                    color: template.color.withValues(alpha: 0.5)),
+                              ),
+                              child: Text(
+                                '${link.unreadCount} NEW',
+                                style: TextStyle(
+                                  color: template.color,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            )
+                          else
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
                                 color: hasResponses
-                                    ? template.color.withValues(alpha: 0.4)
-                                    : AnonTheme.cardBorder,
+                                    ? template.color.withValues(alpha: 0.15)
+                                    : AnonTheme.surface,
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                  color: hasResponses
+                                      ? template.color.withValues(alpha: 0.4)
+                                      : AnonTheme.cardBorder,
+                                ),
+                              ),
+                              child: Text(
+                                '${link.responseCount.toString().padLeft(2, '0')} ${link.responseCount == 1 ? 'REPLY' : 'REPLIES'}',
+                                style: TextStyle(
+                                  color: hasResponses
+                                      ? template.color
+                                      : AnonTheme.subtext,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1,
+                                ),
                               ),
                             ),
-                            child: Text(
-                              '${link.responseCount.toString().padLeft(2, '0')} ${link.responseCount == 1 ? 'REPLY' : 'REPLIES'}',
-                              style: TextStyle(
-                                color: hasResponses
-                                    ? template.color
-                                    : AnonTheme.subtext,
-                                fontSize: 9,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 1,
-                              ),
-                            ),
-                          ),
 
                           const Spacer(),
 
-                          // Inbox arrow
+                          // Inbox arrow — filled solid when unread
                           Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: hasResponses
-                                  ? template.color.withValues(alpha: 0.12)
-                                  : AnonTheme.surface,
+                              color: hasUnread
+                                  ? template.color
+                                  : hasResponses
+                                      ? template.color.withValues(alpha: 0.12)
+                                      : AnonTheme.surface,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
@@ -603,9 +678,11 @@ class _LinkRow extends StatelessWidget {
                                 Text(
                                   'INBOX',
                                   style: TextStyle(
-                                    color: hasResponses
-                                        ? template.color
-                                        : AnonTheme.subtext,
+                                    color: hasUnread
+                                        ? Colors.black
+                                        : hasResponses
+                                            ? template.color
+                                            : AnonTheme.subtext,
                                     fontSize: 9,
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: 1.5,
@@ -615,9 +692,11 @@ class _LinkRow extends StatelessWidget {
                                 Icon(
                                   Icons.arrow_forward_rounded,
                                   size: 12,
-                                  color: hasResponses
-                                      ? template.color
-                                      : AnonTheme.subtext,
+                                  color: hasUnread
+                                      ? Colors.black
+                                      : hasResponses
+                                          ? template.color
+                                          : AnonTheme.subtext,
                                 ),
                               ],
                             ),
