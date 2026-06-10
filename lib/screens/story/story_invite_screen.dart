@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -9,6 +10,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../core/theme.dart';
+import '../../core/web_utils.dart';
 import '../../models/prompt_model.dart';
 
 class StoryInviteScreen extends StatefulWidget {
@@ -39,6 +41,19 @@ class _StoryInviteScreenState extends State<StoryInviteScreen> {
   Future<void> _saveToDevice() async {
     setState(() => _saving = true);
     try {
+      final bytes = await _renderCard();
+      if (kIsWeb) {
+        await saveImageOnWeb(bytes, 'anon_invite_${widget.link.shareCode}.png');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Image opened — long-press it and tap Save to Photos.'),
+              backgroundColor: Color(0xFF059669),
+            ),
+          );
+        }
+        return;
+      }
       final hasAccess = await Gal.hasAccess();
       if (!hasAccess) {
         final granted = await Gal.requestAccess();
@@ -51,9 +66,7 @@ class _StoryInviteScreenState extends State<StoryInviteScreen> {
           return;
         }
       }
-      final bytes = await _renderCard();
-      await Gal.putImageBytes(bytes,
-          name: 'anon_invite_${widget.link.shareCode}');
+      await Gal.putImageBytes(bytes, name: 'anon_invite_${widget.link.shareCode}');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -80,9 +93,13 @@ class _StoryInviteScreenState extends State<StoryInviteScreen> {
     setState(() => _sharing = true);
     try {
       final bytes = await _renderCard();
+      if (kIsWeb) {
+        await shareImageOnWeb(bytes, 'anon_invite_${widget.link.shareCode}.png');
+        if (mounted) setState(() => _sharing = false);
+        return;
+      }
       final dir = await getTemporaryDirectory();
-      final file =
-          File('${dir.path}/anon_invite_${widget.link.shareCode}.png');
+      final file = File('${dir.path}/anon_invite_${widget.link.shareCode}.png');
       await file.writeAsBytes(bytes);
       await Share.shareXFiles(
         [XFile(file.path, mimeType: 'image/png')],
