@@ -610,6 +610,7 @@ class _ResponseRowState extends State<_ResponseRow> {
                             onTap: () => setState(
                                 () => _showReplyInput = !_showReplyInput),
                           ),
+                        const Spacer(),
                         if (r.hasReply)
                           _ActionBtn(
                             icon: Icons.ios_share_rounded,
@@ -617,13 +618,6 @@ class _ResponseRowState extends State<_ResponseRow> {
                             color: color,
                             onTap: () => widget.onShareReply(r),
                           ),
-                        const Spacer(),
-                        _ActionBtn(
-                          icon: Icons.style_rounded,
-                          label: 'CARD',
-                          color: AnonTheme.subtext,
-                          onTap: widget.onShare,
-                        ),
                       ],
                     ),
                   ),
