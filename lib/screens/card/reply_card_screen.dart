@@ -11,6 +11,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../core/native_share.dart';
 import '../../core/theme.dart';
 import '../../core/web_utils.dart';
 import '../../models/prompt_model.dart';
@@ -62,10 +63,26 @@ class _ReplyCardScreenState extends State<ReplyCardScreen> {
     try {
       final bytes = await _renderCard();
       final filename = 'anon_reply_${widget.response.id}.png';
+
       if (kIsWeb) {
         await shareImageOnWeb(bytes, filename);
         return;
       }
+
+      // On Android, fire the Stories intent directly for FB / IG
+      if (Platform.isAndroid) {
+        if (dest == 'facebook') {
+          final launched = await NativeShare.toFacebookStory(bytes);
+          if (launched) return;
+          // Facebook not installed — fall through to generic share
+        } else if (dest == 'instagram') {
+          final launched = await NativeShare.toInstagramStory(bytes);
+          if (launched) return;
+          // Instagram not installed — fall through to generic share
+        }
+      }
+
+      // Generic share (Other, web, iOS, or app-not-installed fallback)
       final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/$filename');
       await file.writeAsBytes(bytes);
