@@ -4,12 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Anonymous — Post a prompt. Get chaos back.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
-      background: #0A0716;
-      color: #fff;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0D0904;
+      color: #F5EED8;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       min-height: 100dvh;
       display: flex;
       flex-direction: column;
@@ -18,32 +22,61 @@
       padding: 40px 24px;
       text-align: center;
     }
+
     .logo {
-      width: 72px; height: 72px;
-      border-radius: 20px;
-      background: linear-gradient(135deg, #7C3AED, #EC4899);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 36px;
-      margin: 0 auto 20px;
-      box-shadow: 0 0 40px rgba(124,58,237,0.4);
+      width: 80px; height: 80px;
+      border-radius: 22px;
+      overflow: hidden;
+      margin: 0 auto 24px;
+      box-shadow: 0 0 40px rgba(212,168,83,0.35), 0 8px 32px rgba(0,0,0,0.5);
     }
-    h1 { font-size: 36px; font-weight: 900; letter-spacing: -1px; }
-    p { color: #94A3B8; font-size: 17px; margin-top: 10px; line-height: 1.5; }
-    .badge {
-      margin-top: 24px;
-      background: #1C1438;
-      border: 1px solid #2D2060;
-      border-radius: 12px;
-      padding: 14px 20px;
+
+    .logo img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    h1 {
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing: -0.8px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      color: #8A7560;
+      font-size: 16px;
+      line-height: 1.55;
+      max-width: 280px;
+      margin: 0 auto 32px;
+    }
+
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #D4A853, #B8892E);
+      color: #1A1209;
       font-size: 14px;
-      color: #A78BFA;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      padding: 14px 28px;
+      border-radius: 14px;
+      text-decoration: none;
+      box-shadow: 0 4px 20px rgba(212,168,83,0.3);
+      transition: opacity 0.15s, transform 0.1s;
     }
+
+    .cta:active { transform: scale(0.97); }
   </style>
 </head>
 <body>
-  <div class="logo">?</div>
+  <div class="logo"><img src="/icon.png" alt="Anonymous"></div>
   <h1>Anonymous</h1>
-  <p>Post a prompt.<br>Get anonymous chaos back.</p>
-  <div class="badge">📱 Download the app to create your own prompt links</div>
+  <p>Post a prompt.<br>Get anonymous chaos back from your friends.</p>
+  <a href="https://juneil-reedz.github.io/anonymous/" class="cta">
+    Open the App →
+  </a>
 </body>
 </html>

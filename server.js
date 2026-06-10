@@ -223,6 +223,15 @@ app.get('/r/:code', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'respond.html'));
 });
 
+// ── 404 catch-all ─────────────────────────────────────────────────────────────
+app.use((req, res) => {
+  if (req.accepts('html')) {
+    res.status(404).sendFile(path.join(__dirname, 'public', 'index.html'));
+  } else {
+    res.status(404).json({ error: 'Not found' });
+  }
+});
+
 // ── Global error handler ───────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
   console.error(err);
