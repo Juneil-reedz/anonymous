@@ -52,7 +52,7 @@ class ProfileScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             sliver: SliverList.separated(
               itemCount: 2,
-              separatorBuilder: (_, _a) => const SizedBox(height: 8),
+              separatorBuilder: (ctx, idx) => const SizedBox(height: 8),
               itemBuilder: (context, i) {
                 final items = [
                   _SettingItem(
@@ -99,7 +99,7 @@ class ProfileScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             sliver: SliverList.separated(
               itemCount: 3,
-              separatorBuilder: (_, _a) => const SizedBox(height: 8),
+              separatorBuilder: (ctx, idx) => const SizedBox(height: 8),
               itemBuilder: (context, i) {
                 final items = [
                   _SettingItem(
@@ -257,22 +257,33 @@ class _ProfileHeaderState extends State<_ProfileHeader> {
   bool _saving = false;
 
   Future<void> _pickAvatar() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 400,
-      maxHeight: 400,
-      imageQuality: 80,
-    );
-    if (picked == null || !mounted) return;
-    final bytes = await picked.readAsBytes();
-    setState(() => _saving = true);
-    final ok = await widget.provider.updateProfile(avatarBase64: base64Encode(bytes));
-    if (mounted) {
-      setState(() => _saving = false);
-      if (!ok) {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 400,
+        maxHeight: 400,
+        imageQuality: 80,
+      );
+      if (picked == null || !mounted) return;
+      final bytes = await picked.readAsBytes();
+      if (!mounted) return;
+      setState(() => _saving = true);
+      final ok = await widget.provider.updateProfile(avatarBase64: base64Encode(bytes));
+      if (mounted) {
+        setState(() => _saving = false);
+        if (!ok) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(widget.provider.error ?? 'Failed to update photo'),
+                backgroundColor: Colors.red.shade800),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _saving = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(widget.provider.error ?? 'Failed to update photo'),
+          SnackBar(content: Text('Could not open gallery: $e'),
               backgroundColor: Colors.red.shade800),
         );
       }
@@ -364,59 +375,13 @@ class _ProfileHeaderState extends State<_ProfileHeader> {
                 ),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 20),
 
-              // Avatar with camera overlay
-              GestureDetector(
-                onTap: _saving ? null : _pickAvatar,
-                child: Stack(
-                  children: [
-                    if (user.avatarBase64 != null)
-                      Container(
-                        width: 110,
-                        height: 110,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: AnonTheme.primaryLight, width: 2.5),
-                        ),
-                        child: ClipOval(
-                          child: Image.memory(
-                            base64Decode(user.avatarBase64!),
-                            width: 110,
-                            height: 110,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      )
-                    else
-                      WaxSealAvatar(
-                        letter: user.displayName[0].toUpperCase(),
-                        username: user.username,
-                        size: 110,
-                      ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        width: 34,
-                        height: 34,
-                        decoration: BoxDecoration(
-                          color: AnonTheme.primaryLight,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: AnonTheme.surface, width: 2.5),
-                        ),
-                        child: _saving
-                            ? const Padding(
-                                padding: EdgeInsets.all(7),
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2, color: Colors.black),
-                              )
-                            : const Icon(Icons.camera_alt_rounded,
-                                color: Colors.black, size: 16),
-                      ),
-                    ),
-                  ],
-                ),
+              // Card stack avatar
+              _ProfileCardStack(
+                avatarBase64: user.avatarBase64,
+                saving: _saving,
+                onTap: _pickAvatar,
               )
                   .animate()
                   .scale(
@@ -1044,6 +1009,230 @@ class _WaxSealPainter extends CustomPainter {
   @override
   bool shouldRepaint(_WaxSealPainter old) =>
       old.letter != letter || old.sealColor != sealColor;
+}
+
+// ─── Profile card stack ───────────────────────────────────────────────────────
+
+class _ProfileCardStack extends StatelessWidget {
+  final String? avatarBase64;
+  final bool saving;
+  final VoidCallback onTap;
+
+  const _ProfileCardStack({
+    required this.avatarBase64,
+    required this.saving,
+    required this.onTap,
+  });
+
+  Widget _card({
+    required Color color,
+    double dx = 0,
+    double dy = 0,
+    double angle = 0,
+    Widget? child,
+    bool hasBorder = false,
+  }) {
+    return Transform.translate(
+      offset: Offset(dx, dy),
+      child: Transform.rotate(
+      alignment: Alignment.center,
+      angle: angle,
+      child: Container(
+        width: 112,
+        height: 148,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(18),
+          border: hasBorder
+              ? Border.all(
+                  color: const Color(0xFFE8D5B5).withValues(alpha: 0.25),
+                  width: 1.5)
+              : null,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.45),
+              blurRadius: 14,
+              offset: const Offset(3, 5),
+            ),
+          ],
+        ),
+        child: child,
+      ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: saving ? null : onTap,
+      child: SizedBox(
+        width: 210,
+        height: 200,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Back card — warm brown, rotated left
+            _card(
+              color: const Color(0xFF3D1F05),
+              dx: -14,
+              dy: 10,
+              angle: -0.26,
+            ),
+            // Middle card — dark brown
+            _card(
+              color: const Color(0xFF1C0E04),
+              dx: -6,
+              dy: 5,
+              angle: -0.13,
+            ),
+            // Front card — near-black with leaf+eye or avatar
+            _card(
+              color: const Color(0xFF0D0904),
+              hasBorder: true,
+              child: Stack(
+                children: [
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: _LeafContent(
+                          avatarBase64: avatarBase64, leafH: 88),
+                    ),
+                  ),
+                  // Camera badge
+                  Positioned(
+                    right: 10,
+                    bottom: 10,
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: AnonTheme.primaryLight,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                            color: const Color(0xFF0D0904), width: 2),
+                      ),
+                      child: saving
+                          ? const Padding(
+                              padding: EdgeInsets.all(5),
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.black),
+                            )
+                          : const Icon(Icons.camera_alt_rounded,
+                              color: Colors.black, size: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LeafContent extends StatelessWidget {
+  final String? avatarBase64;
+  final double leafH;
+
+  const _LeafContent({required this.avatarBase64, required this.leafH});
+
+  @override
+  Widget build(BuildContext context) {
+    final leafW = leafH * 0.65;
+    if (avatarBase64 != null) {
+      return ClipPath(
+        clipper: _LeafClipper(),
+        child: Image.memory(
+          base64Decode(avatarBase64!),
+          width: leafW,
+          height: leafH,
+          fit: BoxFit.cover,
+        ),
+      );
+    }
+    return SizedBox(
+      width: leafW,
+      height: leafH,
+      child: const CustomPaint(painter: _LeafEyePainter()),
+    );
+  }
+}
+
+class _LeafClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final cx = size.width / 2;
+    final h = size.height;
+    final w = size.width;
+    final path = Path();
+    path.moveTo(cx, 0);
+    path.cubicTo(w, h * 0.08, w, h * 0.92, cx, h);
+    path.cubicTo(0, h * 0.92, 0, h * 0.08, cx, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(_LeafClipper _) => false;
+}
+
+class _LeafEyePainter extends CustomPainter {
+  const _LeafEyePainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final h = size.height;
+    final w = size.width;
+
+    // Leaf fill
+    final leafPath = Path();
+    leafPath.moveTo(cx, 0);
+    leafPath.cubicTo(w, h * 0.08, w, h * 0.92, cx, h);
+    leafPath.cubicTo(0, h * 0.92, 0, h * 0.08, cx, 0);
+    leafPath.close();
+    canvas.drawPath(leafPath, Paint()..color = const Color(0xFFE8D5B5));
+
+    // Closed eyelid arc
+    final ey = h * 0.52;
+    final lidPaint = Paint()
+      ..color = const Color(0xFF0D0904)
+      ..strokeWidth = w * 0.07
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    final lidPath = Path();
+    lidPath.moveTo(cx - w * 0.30, ey);
+    lidPath.quadraticBezierTo(cx, ey - h * 0.055, cx + w * 0.30, ey);
+    canvas.drawPath(lidPath, lidPaint);
+
+    // Lashes
+    final lashPaint = Paint()
+      ..color = const Color(0xFF0D0904)
+      ..strokeWidth = w * 0.055
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    const lashes = [
+      (-0.24, 0.0, -0.29, 0.10),
+      (-0.12, 0.0, -0.14, 0.12),
+      (0.00, 0.0, 0.00, 0.13),
+      (0.12, 0.0, 0.14, 0.12),
+      (0.24, 0.0, 0.29, 0.10),
+    ];
+    for (final (x1, y1, x2, y2) in lashes) {
+      canvas.drawLine(
+        Offset(cx + w * x1, ey + h * y1),
+        Offset(cx + w * x2, ey + h * y2),
+        lashPaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_LeafEyePainter _) => false;
 }
 
 // ─── Stats row ────────────────────────────────────────────────────────────────
