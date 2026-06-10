@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "828007939339",
+    "firebase_url": "https://mydh-d446e.firebaseio.com",
+    "project_id": "mydh-d446e",
+    "storage_bucket": "mydh-d446e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:828007939339:android:2707d156ffa34f8b60b60e",
+        "android_client_info": {
+          "package_name": "com.anonymous.anonymous"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA4IUQ06JORjx0x8HxdFvgCcSEFpWFO1WI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

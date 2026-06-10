@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
+import '../../core/update_service.dart';
 import '../home/home_screen.dart';
 import '../profile/profile_screen.dart';
 
@@ -20,6 +21,11 @@ class _ShellScreenState extends State<ShellScreen> {
   void initState() {
     super.initState();
     _tab = widget.initialTab;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) UpdateService.checkAndPrompt(context);
+      });
+    });
   }
 
   final _tabs = const [

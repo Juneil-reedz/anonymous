@@ -2,7 +2,7 @@ name: anonymous
 description: "Post a prompt. Get anonymous chaos back."
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ^3.12.0
@@ -33,6 +33,15 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "web/icons/Icon-512.png"
+  adaptive_icon_background: "#1A1209"
+  adaptive_icon_foreground: "web/icons/Icon-512.png"
+  min_sdk_android: 21
 
 flutter:
   uses-material-design: true

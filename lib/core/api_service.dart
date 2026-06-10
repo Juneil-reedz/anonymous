@@ -21,7 +21,7 @@ class ApiService {
         Uri.parse('$baseUrl$path'),
         headers: _headers,
         body: json.encode(body),
-      ).timeout(const Duration(seconds: 15));
+      ).timeout(const Duration(seconds: 30));
       final data = json.decode(res.body) as Map<String, dynamic>;
       if (res.statusCode >= 400) throw data['error'] ?? 'Request failed';
       return data;
@@ -36,7 +36,7 @@ class ApiService {
       final res = await http.get(
         Uri.parse('$baseUrl$path'),
         headers: _headers,
-      ).timeout(const Duration(seconds: 15));
+      ).timeout(const Duration(seconds: 30));
       final data = json.decode(res.body) as Map<String, dynamic>;
       if (res.statusCode >= 400) throw data['error'] ?? 'Request failed';
       return data;
@@ -52,7 +52,7 @@ class ApiService {
         Uri.parse('$baseUrl$path'),
         headers: _headers,
         body: json.encode(body),
-      ).timeout(const Duration(seconds: 15));
+      ).timeout(const Duration(seconds: 30));
       final data = json.decode(res.body) as Map<String, dynamic>;
       if (res.statusCode >= 400) throw data['error'] ?? 'Request failed';
       return data;
@@ -67,7 +67,7 @@ class ApiService {
       final res = await http.delete(
         Uri.parse('$baseUrl$path'),
         headers: _headers,
-      ).timeout(const Duration(seconds: 15));
+      ).timeout(const Duration(seconds: 30));
       final data = json.decode(res.body) as Map<String, dynamic>;
       if (res.statusCode >= 400) throw data['error'] ?? 'Request failed';
       return data;
