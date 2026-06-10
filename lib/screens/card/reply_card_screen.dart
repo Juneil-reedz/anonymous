@@ -536,36 +536,107 @@ class _IgIcon extends StatelessWidget {
   }
 }
 
-// ─── Reusable avatar + username widget for card headers ──────────────────────
+// ─── Mini profile card (front card from profile stack) ───────────────────────
 
-class _AvatarUsername extends StatelessWidget {
-  final String username;
+class _MiniProfileCard extends StatelessWidget {
   final String? avatarBase64;
-  final double size;
 
-  const _AvatarUsername({required this.username, this.avatarBase64, this.size = 20});
+  const _MiniProfileCard({this.avatarBase64});
 
   @override
   Widget build(BuildContext context) {
-    if (avatarBase64 != null) {
-      return ClipOval(
-        child: Image.memory(
-          base64Decode(avatarBase64!),
-          width: 34,
-          height: 34,
-          fit: BoxFit.cover,
-        ),
-      );
-    }
-    return Text(
-      '@$username',
-      style: TextStyle(
-        color: Colors.white.withValues(alpha: 0.35),
-        fontSize: size * 0.55,
-        fontWeight: FontWeight.w600,
+    const w = 38.0;
+    const h = 50.0;
+    const r = 9.0;
+
+    return Container(
+      width: w,
+      height: h,
+      decoration: BoxDecoration(
+        color: const Color(0xFF0D0904),
+        borderRadius: BorderRadius.circular(r),
+        border: avatarBase64 == null
+            ? Border.all(
+                color: const Color(0xFFE8D5B5).withValues(alpha: 0.28),
+                width: 1.5)
+            : null,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.5),
+            blurRadius: 8,
+            offset: const Offset(2, 3),
+          ),
+        ],
       ),
+      child: avatarBase64 != null
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(r),
+              child: Image.memory(
+                base64Decode(avatarBase64!),
+                fit: BoxFit.cover,
+              ),
+            )
+          : Center(
+              child: SizedBox(
+                width: w * 0.52,
+                height: h * 0.58,
+                child: const CustomPaint(painter: _MiniLeafEyePainter()),
+              ),
+            ),
     );
   }
+}
+
+class _MiniLeafEyePainter extends CustomPainter {
+  const _MiniLeafEyePainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final h = size.height;
+    final w = size.width;
+
+    final leafPath = Path();
+    leafPath.moveTo(cx, 0);
+    leafPath.cubicTo(w, h * 0.08, w, h * 0.92, cx, h);
+    leafPath.cubicTo(0, h * 0.92, 0, h * 0.08, cx, 0);
+    leafPath.close();
+    canvas.drawPath(leafPath, Paint()..color = const Color(0xFFE8D5B5));
+
+    final ey = h * 0.52;
+    final lidPaint = Paint()
+      ..color = const Color(0xFF0D0904)
+      ..strokeWidth = w * 0.07
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    final lidPath = Path();
+    lidPath.moveTo(cx - w * 0.30, ey);
+    lidPath.quadraticBezierTo(cx, ey - h * 0.055, cx + w * 0.30, ey);
+    canvas.drawPath(lidPath, lidPaint);
+
+    final lashPaint = Paint()
+      ..color = const Color(0xFF0D0904)
+      ..strokeWidth = w * 0.055
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    const lashes = [
+      (-0.24, 0.0, -0.29, 0.10),
+      (-0.12, 0.0, -0.14, 0.12),
+      (0.00, 0.0, 0.00, 0.13),
+      (0.12, 0.0, 0.14, 0.12),
+      (0.24, 0.0, 0.29, 0.10),
+    ];
+    for (final (x1, y1, x2, y2) in lashes) {
+      canvas.drawLine(
+        Offset(cx + w * x1, ey + h * y1),
+        Offset(cx + w * x2, ey + h * y2),
+        lashPaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_MiniLeafEyePainter _) => false;
 }
 
 // ─── Style 1: VERDICT ────────────────────────────────────────────────────────
@@ -636,7 +707,7 @@ class _VerdictCard extends StatelessWidget {
                             letterSpacing: 1),
                       ),
                       const Spacer(),
-                      _AvatarUsername(username: link.username, avatarBase64: avatarBase64, size: 20),
+                      _MiniProfileCard(avatarBase64: avatarBase64),
                     ],
                   ),
                   SizedBox(height: width * 0.06),
@@ -789,7 +860,7 @@ class _ContrastCard extends StatelessWidget {
                                 fontWeight: FontWeight.w700)),
                       ),
                       const Spacer(),
-                      _AvatarUsername(username: link.username, avatarBase64: avatarBase64, size: 20),
+                      _MiniProfileCard(avatarBase64: avatarBase64),
                     ],
                   ),
                   SizedBox(height: width * 0.05),
@@ -913,18 +984,7 @@ class _ReceiptCard extends StatelessWidget {
                         letterSpacing: 1),
                   ),
                   const Spacer(),
-                  if (avatarBase64 != null)
-                    ClipOval(
-                      child: Image.memory(base64Decode(avatarBase64!),
-                          width: 24, height: 24, fit: BoxFit.cover),
-                    )
-                  else
-                    Text('RECEIPT',
-                        style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
-                            fontSize: 10,
-                            letterSpacing: 1.5,
-                            fontWeight: FontWeight.w700)),
+                  _MiniProfileCard(avatarBase64: avatarBase64),
                 ],
               ),
             ),
