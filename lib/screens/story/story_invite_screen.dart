@@ -365,7 +365,7 @@ class _InviteCard extends StatelessWidget {
 
             // Content — uses Positioned sections so the link zone is
             // anchored to the exact center of the card.
-            // Top third: branding + icon
+            // Top section: branding + icon + prompt
             Positioned(
               top: height * 0.06,
               left: width * 0.07,
@@ -406,12 +406,12 @@ class _InviteCard extends StatelessWidget {
                     ],
                   ),
 
-                  SizedBox(height: height * 0.06),
+                  SizedBox(height: height * 0.05),
 
-                  // Big icon
+                  // Icon
                   Container(
-                    width: width * 0.32,
-                    height: width * 0.32,
+                    width: width * 0.28,
+                    height: width * 0.28,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: template.color.withValues(alpha: 0.12),
@@ -429,50 +429,63 @@ class _InviteCard extends StatelessWidget {
                     child: Icon(
                       template.icon,
                       color: template.color,
-                      size: width * 0.15,
+                      size: width * 0.13,
                     ),
                   ),
 
-                  SizedBox(height: height * 0.035),
+                  SizedBox(height: height * 0.03),
 
-                  // Title
-                  Text(
-                    template.title.toUpperCase(),
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.getFont(
-                      template.fontFamily,
-                      color: Colors.white,
-                      fontSize: width * 0.09,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.5,
-                      height: 1.1,
+                  // For custom prompts: show question as headline
+                  // For presets: show title then question
+                  if (link.promptTypeKey == 'customPrompt') ...[
+                    Text(
+                      '"${template.question}"',
+                      textAlign: TextAlign.center,
+                      maxLines: 4,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.getFont(
+                        template.fontFamily,
+                        color: Colors.white,
+                        fontSize: width * 0.072,
+                        fontWeight: FontWeight.w700,
+                        height: 1.35,
+                      ),
                     ),
-                  ),
-
-                  SizedBox(height: height * 0.015),
-
-                  // Question
-                  Text(
-                    template.question,
-                    textAlign: TextAlign.center,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.getFont(
-                      template.fontFamily,
-                      color: Colors.white.withValues(alpha: 0.65),
-                      fontSize: width * 0.042,
-                      fontWeight: FontWeight.w400,
-                      height: 1.4,
+                  ] else ...[
+                    Text(
+                      template.title.toUpperCase(),
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.getFont(
+                        template.fontFamily,
+                        color: Colors.white,
+                        fontSize: width * 0.09,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.5,
+                        height: 1.1,
+                      ),
                     ),
-                  ),
+                    SizedBox(height: height * 0.012),
+                    Text(
+                      template.question,
+                      textAlign: TextAlign.center,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.getFont(
+                        template.fontFamily,
+                        color: Colors.white.withValues(alpha: 0.65),
+                        fontSize: width * 0.042,
+                        fontWeight: FontWeight.w400,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
 
-            // ── PASTE LINK HERE — pinned to CENTER of card ──────────────
+            // ── PASTE LINK HERE — lower third for clear gap ─────────────
             Positioned(
-              // Center it: top = 50% height minus half of zone height (~height*0.11)
-              top: height * 0.5 - height * 0.055,
+              top: height * 0.62,
               left: width * 0.07,
               right: width * 0.07,
               child: Container(

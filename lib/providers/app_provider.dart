@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/api_service.dart';
+import '../core/notification_service.dart';
 import '../models/prompt_model.dart';
 
 class AppProvider extends ChangeNotifier {
@@ -98,9 +99,11 @@ class AppProvider extends ChangeNotifier {
     await prefs.setString(_userKey, json.encode(userMap));
     _links = [];
     notifyListeners();
+    NotificationService.registerToken();
   }
 
   Future<void> logout() async {
+    NotificationService.clearToken();
     ApiService.setToken(null);
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);

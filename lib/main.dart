@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'core/notification_service.dart';
 import 'core/theme.dart';
 import 'providers/app_provider.dart';
 import 'screens/splash_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
   ));
+  try {
+    await NotificationService.init();
+  } catch (_) {
+    // Firebase not configured yet — app works without notifications
+  }
   runApp(
     ChangeNotifierProvider(
       create: (_) => AppProvider(),
