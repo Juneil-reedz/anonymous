@@ -524,49 +524,72 @@ class _InviteCard extends StatelessWidget {
               ),
             ),
 
-            // ── PASTE LINK HERE — pinned to lower area ──────────────────
+            // ── Link zone — shows baked-in URL ─────────────────────────
             Positioned(
-              bottom: height * 0.1,
+              bottom: height * 0.2,
               left: width * 0.07,
               right: width * 0.07,
               child: Container(
                 padding: EdgeInsets.symmetric(
-                    horizontal: width * 0.05, vertical: height * 0.03),
+                    horizontal: width * 0.04, vertical: height * 0.025),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.05),
+                  color: Colors.white.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: template.color.withValues(alpha: 0.7),
+                    color: template.color.withValues(alpha: 0.8),
                     width: 2,
                   ),
                 ),
                 child: Column(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.link_rounded,
-                            color: template.color.withValues(alpha: 0.9),
-                            size: 20),
-                        const SizedBox(width: 8),
-                        Text(
-                          'PASTE LINK HERE',
-                          style: TextStyle(
-                            color: template.color,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 2.5,
+                    Text(
+                      'RESPOND ANONYMOUSLY',
+                      style: TextStyle(
+                        color: template.color,
+                        fontSize: width * 0.028,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                    SizedBox(height: height * 0.01),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: width * 0.03, vertical: height * 0.012),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.link_rounded,
+                              color: template.color.withValues(alpha: 0.8),
+                              size: 14),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              url.replaceFirst('https://', ''),
+                              textAlign: TextAlign.center,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.85),
+                                fontSize: width * 0.03,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     SizedBox(height: height * 0.008),
                     Text(
-                      'tap the link sticker & paste your link',
+                      'no account needed',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.35),
-                        fontSize: 10,
-                        letterSpacing: 0.3,
+                        color: Colors.white.withValues(alpha: 0.3),
+                        fontSize: width * 0.025,
+                        letterSpacing: 0.5,
                       ),
                     ),
                   ],
@@ -576,7 +599,7 @@ class _InviteCard extends StatelessWidget {
 
             // ── Bottom tagline ──────────────────────────────────────────
             Positioned(
-              bottom: height * 0.035,
+              bottom: height * 0.055,
               left: 0,
               right: 0,
               child: Center(
