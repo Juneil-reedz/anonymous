@@ -134,6 +134,20 @@ app.post('/api/fcm-token', auth, wrap(async (req, res) => {
   res.json({ ok: true });
 }));
 
+// ── Change password ────────────────────────────────────────────────────────────
+app.post('/api/change-password', auth, wrap(async (req, res) => {
+  const { currentPassword, newPassword } = req.body || {};
+  if (!currentPassword || !newPassword) return res.status(400).json({ error: 'Both passwords required' });
+  if (newPassword.length < 6) return res.status(400).json({ error: 'New password must be at least 6 characters' });
+  const user = await db.findUserById(req.user.id);
+  if (!user || !bcrypt.compareSync(currentPassword, user.passwordHash)) {
+    return res.status(401).json({ error: 'Current password is incorrect' });
+  }
+  const hash = bcrypt.hashSync(newPassword, 10);
+  await db.updateUser(req.user.id, { passwordHash: hash });
+  res.json({ ok: true });
+}));
+
 // ── Profile update ─────────────────────────────────────────────────────────────
 app.put('/api/profile', auth, wrap(async (req, res) => {
   const { displayName, avatarBase64 } = req.body || {};
