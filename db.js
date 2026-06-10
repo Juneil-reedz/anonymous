@@ -21,6 +21,11 @@ const db = {
     data.users.push(user);
     write(data);
   },
+  updateUser: (id, fields) => {
+    const data = read();
+    const idx = data.users.findIndex(u => u.id === id);
+    if (idx !== -1) { Object.assign(data.users[idx], fields); write(data); }
+  },
 
   // Links
   allLinksForUser: (userId) => {

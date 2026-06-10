@@ -10,6 +10,38 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'anon-secret-change-in-prod';
 
+// ── Firebase Admin (optional — only active when env var is set) ───────────────
+let firebaseAdmin = null;
+try {
+  const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (serviceAccount) {
+    const admin = require('firebase-admin');
+    admin.initializeApp({
+      credential: admin.credential.cert(JSON.parse(serviceAccount)),
+    });
+    firebaseAdmin = admin;
+    console.log('Firebase Admin initialized — push notifications enabled');
+  }
+} catch (e) {
+  console.warn('Firebase Admin init failed:', e.message);
+}
+
+async function sendPushNotification(userId, title, body, data = {}) {
+  if (!firebaseAdmin) return;
+  try {
+    const user = db.findUser(u => u.id === userId);
+    if (!user?.fcmToken) return;
+    await firebaseAdmin.messaging().send({
+      token: user.fcmToken,
+      notification: { title, body },
+      data,
+      android: { priority: 'high' },
+    });
+  } catch (e) {
+    console.warn('Push notification failed:', e.message);
+  }
+}
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -94,6 +126,13 @@ app.post('/api/login', wrap((req, res) => {
   res.json({ user: { id: user.id, username: user.username, displayName: user.displayName }, token });
 }));
 
+// ── FCM token ─────────────────────────────────────────────────────────────────
+app.post('/api/fcm-token', auth, wrap((req, res) => {
+  const { token } = req.body || {};
+  db.updateUser(req.user.id, { fcmToken: token || null });
+  res.json({ ok: true });
+}));
+
 // ── Link routes ───────────────────────────────────────────────────────────────
 app.post('/api/links', auth, wrap((req, res) => {
   const { promptTypeKey, customQuestion } = req.body || {};
@@ -167,6 +206,15 @@ app.post('/api/r/:code/respond', wrap((req, res) => {
 
   const id = uuidv4();
   db.addResponse({ id, linkId: link.id, message: message.trim(), isRead: false, createdAt: new Date().toISOString() });
+
+  // Notify the link owner
+  sendPushNotification(
+    link.userId,
+    'New anonymous response! 👀',
+    `Someone just responded to your "${link.promptTypeKey === 'customPrompt' ? link.customQuestion || 'custom prompt' : link.promptTypeKey}" prompt.`,
+    { linkId: link.id, shareCode: link.shareCode },
+  );
+
   res.json({ success: true });
 }));
 
