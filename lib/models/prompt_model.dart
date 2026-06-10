@@ -150,7 +150,7 @@ class PromptTemplate {
       color: Color(0xFFC9A87C),
       textColor: Color(0xFF1F150C),
       fontFamily: 'Caveat',
-      icon: Icons.edit_rounded,
+      icon: Icons.auto_awesome_rounded,
     ),
   ];
 

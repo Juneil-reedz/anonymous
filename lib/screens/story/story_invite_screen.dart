@@ -363,129 +363,141 @@ class _InviteCard extends StatelessWidget {
               painter: _GridPainter(),
             ),
 
-            // Content — uses Positioned sections so the link zone is
-            // anchored to the exact center of the card.
-            // Top section: branding + icon + prompt
+            // ── Branding row — pinned to top ────────────────────────────
             Positioned(
-              top: height * 0.06,
+              top: height * 0.05,
               left: width * 0.07,
               right: width * 0.07,
-              child: Column(
+              child: Row(
                 children: [
-                  // Branding row
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                              color: template.color.withValues(alpha: 0.6),
-                              width: 1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          'anonymous.',
-                          style: TextStyle(
-                            color: template.color,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        '@${link.username}',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: height * 0.05),
-
-                  // Icon
                   Container(
-                    width: width * 0.28,
-                    height: width * 0.28,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: template.color.withValues(alpha: 0.12),
                       border: Border.all(
-                          color: template.color.withValues(alpha: 0.35),
-                          width: 2),
-                      boxShadow: [
-                        BoxShadow(
-                          color: template.color.withValues(alpha: 0.45),
-                          blurRadius: 40,
-                          spreadRadius: 4,
-                        ),
-                      ],
+                          color: template.color.withValues(alpha: 0.6),
+                          width: 1),
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Icon(
-                      template.icon,
-                      color: template.color,
-                      size: width * 0.13,
+                    child: Text(
+                      'anonymous.',
+                      style: TextStyle(
+                        color: template.color,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
-
-                  SizedBox(height: height * 0.03),
-
-                  // For custom prompts: show question as headline
-                  // For presets: show title then question
-                  if (link.promptTypeKey == 'customPrompt') ...[
-                    Text(
-                      '"${template.question}"',
-                      textAlign: TextAlign.center,
-                      maxLines: 4,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.getFont(
-                        template.fontFamily,
-                        color: Colors.white,
-                        fontSize: width * 0.072,
-                        fontWeight: FontWeight.w700,
-                        height: 1.35,
-                      ),
+                  const Spacer(),
+                  Text(
+                    '@${link.username}',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
                     ),
-                  ] else ...[
-                    Text(
-                      template.title.toUpperCase(),
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.getFont(
-                        template.fontFamily,
-                        color: Colors.white,
-                        fontSize: width * 0.09,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.5,
-                        height: 1.1,
-                      ),
-                    ),
-                    SizedBox(height: height * 0.012),
-                    Text(
-                      template.question,
-                      textAlign: TextAlign.center,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.getFont(
-                        template.fontFamily,
-                        color: Colors.white.withValues(alpha: 0.65),
-                        fontSize: width * 0.042,
-                        fontWeight: FontWeight.w400,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
+                  ),
                 ],
               ),
             ),
 
-            // ── PASTE LINK HERE — lower third for clear gap ─────────────
+            // ── Main content — vertically centered in upper portion ──────
             Positioned(
-              top: height * 0.62,
+              top: height * 0.13,
+              left: width * 0.07,
+              right: width * 0.07,
+              bottom: height * 0.36,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (link.promptTypeKey == 'customPrompt') ...[
+                      // Decorative quote mark
+                      Text(
+                        '"',
+                        style: TextStyle(
+                          color: template.color.withValues(alpha: 0.4),
+                          fontSize: width * 0.22,
+                          height: 0.6,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      SizedBox(height: height * 0.01),
+                      Text(
+                        template.question,
+                        textAlign: TextAlign.center,
+                        maxLines: 5,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.getFont(
+                          template.fontFamily,
+                          color: Colors.white,
+                          fontSize: width * 0.075,
+                          fontWeight: FontWeight.w700,
+                          height: 1.3,
+                        ),
+                      ),
+                    ] else ...[
+                      // Icon circle
+                      Container(
+                        width: width * 0.26,
+                        height: width * 0.26,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: template.color.withValues(alpha: 0.12),
+                          border: Border.all(
+                              color: template.color.withValues(alpha: 0.35),
+                              width: 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: template.color.withValues(alpha: 0.45),
+                              blurRadius: 40,
+                              spreadRadius: 4,
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          template.icon,
+                          color: template.color,
+                          size: width * 0.12,
+                        ),
+                      ),
+                      SizedBox(height: height * 0.025),
+                      Text(
+                        template.title.toUpperCase(),
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.getFont(
+                          template.fontFamily,
+                          color: Colors.white,
+                          fontSize: width * 0.09,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.5,
+                          height: 1.1,
+                        ),
+                      ),
+                      SizedBox(height: height * 0.012),
+                      Text(
+                        template.question,
+                        textAlign: TextAlign.center,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.getFont(
+                          template.fontFamily,
+                          color: Colors.white.withValues(alpha: 0.65),
+                          fontSize: width * 0.042,
+                          fontWeight: FontWeight.w400,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+
+            // ── PASTE LINK HERE — pinned to lower area ──────────────────
+            Positioned(
+              bottom: height * 0.1,
               left: width * 0.07,
               right: width * 0.07,
               child: Container(
@@ -533,9 +545,9 @@ class _InviteCard extends StatelessWidget {
               ),
             ),
 
-            // ── Bottom tagline ─────────────────────────────────────────
+            // ── Bottom tagline ──────────────────────────────────────────
             Positioned(
-              bottom: height * 0.04,
+              bottom: height * 0.035,
               left: 0,
               right: 0,
               child: Center(
