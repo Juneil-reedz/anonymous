@@ -134,6 +134,18 @@ app.post('/api/fcm-token', auth, wrap(async (req, res) => {
   res.json({ ok: true });
 }));
 
+// ── Profile update ─────────────────────────────────────────────────────────────
+app.put('/api/profile', auth, wrap(async (req, res) => {
+  const { displayName, avatarBase64 } = req.body || {};
+  const updates = {};
+  if (displayName?.trim()) updates.displayName = displayName.trim();
+  if (avatarBase64 !== undefined) updates.avatarBase64 = avatarBase64;
+  if (!Object.keys(updates).length) return res.status(400).json({ error: 'Nothing to update' });
+  await db.updateUser(req.user.id, updates);
+  const user = await db.findUserById(req.user.id);
+  res.json({ user: { id: user.id, username: user.username, displayName: user.displayName, avatarBase64: user.avatarBase64 || null } });
+}));
+
 // ── Link routes ────────────────────────────────────────────────────────────────
 app.post('/api/links', auth, wrap(async (req, res) => {
   const { promptTypeKey, customQuestion } = req.body || {};
@@ -192,8 +204,15 @@ app.get('/api/r/:code', wrap(async (req, res) => {
   const link = await db.findLinkByCode(req.params.code.toUpperCase());
   if (!link) return res.status(404).json({ error: 'Link not found' });
   if (!link.isActive) return res.status(410).json({ error: 'This link has been closed' });
-  const responses = await db.getResponses(link.id);
-  res.json({ link: { ...link, responseCount: responses.length } });
+  const [responses, owner] = await Promise.all([
+    db.getResponses(link.id),
+    db.findUserById(link.userId),
+  ]);
+  res.json({
+    link: { ...link, responseCount: responses.length },
+    ownerAvatar: owner?.avatarBase64 || null,
+    ownerDisplayName: owner?.displayName || link.username,
+  });
 }));
 
 app.post('/api/r/:code/respond', wrap(async (req, res) => {

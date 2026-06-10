@@ -148,12 +148,19 @@
 
     .prompt-icon-circle {
       width: 44px; height: 44px;
-      border-radius: 14px;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 22px;
       flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .prompt-icon-circle img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
     }
 
     .prompt-meta-text {}
@@ -650,7 +657,7 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Link not found');
         currentLink = data.link;
-        render(data.link);
+        render(data.link, data.ownerAvatar || null, data.ownerDisplayName || data.link.username);
         show('respond-state');
       } catch (e) {
         document.getElementById('error-msg').textContent = e.message;
@@ -658,7 +665,7 @@
       }
     }
 
-    function render(link) {
+    function render(link, ownerAvatar, ownerDisplayName) {
       const t = PROMPTS[link.promptTypeKey] || PROMPTS.roastMe;
       const question = (link.promptTypeKey === 'customPrompt' && link.customQuestion)
         ? link.customQuestion
@@ -666,18 +673,23 @@
 
       document.title = `${t.emoji} @${link.username} — Anonymous`;
 
-      // Set icon
-      document.getElementById('prompt-emoji').textContent = t.emoji;
-
       // Color the card
       const card = document.getElementById('prompt-card');
       card.style.background = hexToRgba(t.color, 0.1);
       card.style.borderColor = hexToRgba(t.color, 0.35);
       card.style.setProperty('--card-color', t.color);
 
-      // Color the icon circle
+      // Icon circle — show avatar photo or emoji
       const circle = document.getElementById('prompt-icon-circle');
-      circle.style.background = hexToRgba(t.color, 0.2);
+      if (ownerAvatar) {
+        circle.innerHTML = `<img src="data:image/png;base64,${ownerAvatar}" alt="@${link.username}">`;
+        circle.style.background = 'transparent';
+        circle.style.border = '2px solid ' + hexToRgba(t.color, 0.4);
+      } else {
+        circle.innerHTML = `<span style="font-size:22px">${t.emoji}</span>`;
+        circle.style.background = hexToRgba(t.color, 0.2);
+        circle.style.border = 'none';
+      }
 
       // Set text
       if (link.promptTypeKey === 'customPrompt') {
