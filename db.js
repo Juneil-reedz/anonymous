@@ -1,74 +1,86 @@
-const fs = require('fs');
-const path = require('path');
+const admin = require('firebase-admin');
 
-const DB_PATH = path.join(__dirname, 'data.json');
+const fs = () => admin.firestore();
 
-function read() {
-  if (!fs.existsSync(DB_PATH)) return { users: [], links: [], responses: [] };
-  try { return JSON.parse(fs.readFileSync(DB_PATH, 'utf8')); }
-  catch { return { users: [], links: [], responses: [] }; }
-}
-
-function write(data) {
-  fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
-}
-
-const db = {
-  // Users
-  findUser: (pred) => read().users.find(pred) || null,
-  createUser: (user) => {
-    const data = read();
-    data.users.push(user);
-    write(data);
-  },
-  updateUser: (id, fields) => {
-    const data = read();
-    const idx = data.users.findIndex(u => u.id === id);
-    if (idx !== -1) { Object.assign(data.users[idx], fields); write(data); }
+module.exports = {
+  // ── Users ──────────────────────────────────────────────────────────────────
+  findUserByUsername: async (username) => {
+    const snap = await fs().collection('users').where('username', '==', username).limit(1).get();
+    return snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() };
   },
 
-  // Links
-  allLinksForUser: (userId) => {
-    const data = read();
-    return data.links
-      .filter(l => l.userId === userId)
-      .map(l => ({ ...l, responseCount: data.responses.filter(r => r.linkId === l.id).length }))
+  findUserById: async (id) => {
+    const doc = await fs().collection('users').doc(id).get();
+    return doc.exists ? { id: doc.id, ...doc.data() } : null;
+  },
+
+  createUser: async (user) => {
+    const { id, ...data } = user;
+    await fs().collection('users').doc(id).set(data);
+  },
+
+  updateUser: async (id, fields) => {
+    await fs().collection('users').doc(id).update(fields);
+  },
+
+  // ── Links ──────────────────────────────────────────────────────────────────
+  allLinksForUser: async (userId) => {
+    const snap = await fs().collection('links').where('userId', '==', userId).get();
+    const links = await Promise.all(
+      snap.docs.map(async (doc) => {
+        const countSnap = await fs().collection('responses').where('linkId', '==', doc.id).get();
+        return { id: doc.id, ...doc.data(), responseCount: countSnap.size };
+      })
+    );
+    return links.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  },
+
+  findLinkByCode: async (code) => {
+    const snap = await fs().collection('links').where('shareCode', '==', code).limit(1).get();
+    return snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() };
+  },
+
+  findLinkById: async (id) => {
+    const doc = await fs().collection('links').doc(id).get();
+    return doc.exists ? { id: doc.id, ...doc.data() } : null;
+  },
+
+  createLink: async (link) => {
+    const { id, ...data } = link;
+    await fs().collection('links').doc(id).set(data);
+  },
+
+  deleteLink: async (id) => {
+    const batch = fs().batch();
+    batch.delete(fs().collection('links').doc(id));
+    const responses = await fs().collection('responses').where('linkId', '==', id).get();
+    responses.docs.forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+  },
+
+  codeExists: async (code) => {
+    const snap = await fs().collection('links').where('shareCode', '==', code).limit(1).get();
+    return !snap.empty;
+  },
+
+  // ── Responses ──────────────────────────────────────────────────────────────
+  getResponses: async (linkId) => {
+    const snap = await fs().collection('responses').where('linkId', '==', linkId).get();
+    return snap.docs
+      .map((doc) => ({ id: doc.id, ...doc.data() }))
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   },
-  findLinkByCode: (code) => read().links.find(l => l.shareCode === code) || null,
-  findLinkById: (id) => read().links.find(l => l.id === id) || null,
-  createLink: (link) => {
-    const data = read();
-    data.links.push(link);
-    write(data);
-  },
-  deleteLink: (id) => {
-    const data = read();
-    data.links = data.links.filter(l => l.id !== id);
-    data.responses = data.responses.filter(r => r.linkId !== id);
-    write(data);
-  },
-  codeExists: (code) => !!read().links.find(l => l.shareCode === code),
 
-  // Responses
-  getResponses: (linkId) =>
-    read().responses
-      .filter(r => r.linkId === linkId)
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-  addResponse: (response) => {
-    const data = read();
-    data.responses.push(response);
-    write(data);
+  addResponse: async (response) => {
+    const { id, ...data } = response;
+    await fs().collection('responses').doc(id).set(data);
   },
-  addReply: (responseId, reply, repliedAt) => {
-    const data = read();
-    const idx = data.responses.findIndex(r => r.id === responseId);
-    if (idx === -1) return null;
-    data.responses[idx].reply = reply;
-    data.responses[idx].repliedAt = repliedAt;
-    write(data);
-    return data.responses[idx];
+
+  addReply: async (responseId, reply, repliedAt) => {
+    const ref = fs().collection('responses').doc(responseId);
+    const doc = await ref.get();
+    if (!doc.exists) return null;
+    await ref.update({ reply, repliedAt });
+    return { id: doc.id, ...doc.data(), reply, repliedAt };
   },
 };
-
-module.exports = db;
