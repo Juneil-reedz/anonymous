@@ -44,24 +44,34 @@ class _ReplyCardScreenState extends State<ReplyCardScreen> {
     return byteData!.buffer.asUint8List();
   }
 
-  Future<void> _saveAndShare() async {
+  Future<void> _showShareOptions() async {
+    final dest = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _ShareDestSheet(color: widget.link.template.color),
+    );
+    if (dest == null || !mounted) return;
+    await _shareToDestination(dest);
+  }
+
+  Future<void> _shareToDestination(String dest) async {
     setState(() => _sharing = true);
     try {
       final bytes = await _renderCard();
+      final filename = 'anon_reply_${widget.response.id}.png';
       if (kIsWeb) {
-        await shareImageOnWeb(bytes, 'anon_reply_${widget.response.id}.png');
-        if (mounted) setState(() => _sharing = false);
+        await shareImageOnWeb(bytes, filename);
         return;
       }
       final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/anon_reply_${widget.response.id}.png');
+      final file = File('${dir.path}/$filename');
       await file.writeAsBytes(bytes);
       await Share.shareXFiles(
         [XFile(file.path, mimeType: 'image/png')],
         subject: 'Anonymous reply — ${widget.link.template.title}',
       );
     } catch (e) {
-      if (mounted) _showError('Could not export: $e');
+      if (mounted) _showError('Could not share: $e');
     } finally {
       if (mounted) setState(() => _sharing = false);
     }
@@ -256,7 +266,7 @@ class _ReplyCardScreenState extends State<ReplyCardScreen> {
               width: double.infinity,
               height: 50,
               child: ElevatedButton.icon(
-                onPressed: _sharing ? null : _saveAndShare,
+                onPressed: _sharing ? null : _showShareOptions,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: template.color,
                   shape: RoundedRectangleBorder(
@@ -343,6 +353,165 @@ class _ReplyCardScreenState extends State<ReplyCardScreen> {
         return _ReceiptCard(
             response: widget.response, link: widget.link, width: width);
     }
+  }
+}
+
+// ─── Share destination bottom sheet ──────────────────────────────────────────
+
+class _ShareDestSheet extends StatelessWidget {
+  final Color color;
+  const _ShareDestSheet({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFF1A1209),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle
+          Container(
+            width: 40, height: 4,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'SHARE TO',
+            style: TextStyle(
+              color: AnonTheme.subtext,
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 2,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              _DestTile(
+                icon: _FbIcon(),
+                label: 'Facebook\nStory',
+                onTap: () => Navigator.pop(context, 'facebook'),
+              ),
+              const SizedBox(width: 12),
+              _DestTile(
+                icon: _IgIcon(),
+                label: 'Instagram\nStory',
+                onTap: () => Navigator.pop(context, 'instagram'),
+              ),
+              const SizedBox(width: 12),
+              _DestTile(
+                icon: Container(
+                  width: 50, height: 50,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2C1F13),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFF3D2C18)),
+                  ),
+                  child: const Icon(Icons.more_horiz_rounded,
+                      color: AnonTheme.primary, size: 26),
+                ),
+                label: 'Other\nApps',
+                onTap: () => Navigator.pop(context, 'other'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'The share sheet will open — choose the destination from there.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AnonTheme.subtext.withValues(alpha: 0.7),
+              fontSize: 12,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DestTile extends StatelessWidget {
+  final Widget icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _DestTile({required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Column(
+          children: [
+            icon,
+            const SizedBox(height: 8),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AnonTheme.primary,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                height: 1.3,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FbIcon extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity, height: 50,
+      decoration: BoxDecoration(
+        color: const Color(0xFF1877F2),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: const Center(
+        child: Text(
+          'f',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 28,
+            fontWeight: FontWeight.w900,
+            height: 1,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _IgIcon extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity, height: 50,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFF58529), Color(0xFFDD2A7B), Color(0xFF8134AF)],
+          begin: Alignment.bottomLeft,
+          end: Alignment.topRight,
+        ),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: const Center(
+        child: Icon(Icons.camera_alt_rounded, color: Colors.white, size: 24),
+      ),
+    );
   }
 }
 
