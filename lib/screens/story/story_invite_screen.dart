@@ -39,6 +39,18 @@ class _StoryInviteScreenState extends State<StoryInviteScreen> {
   Future<void> _saveToDevice() async {
     setState(() => _saving = true);
     try {
+      final hasAccess = await Gal.hasAccess();
+      if (!hasAccess) {
+        final granted = await Gal.requestAccess();
+        if (!granted) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Storage permission denied. Allow it in Settings.')),
+            );
+          }
+          return;
+        }
+      }
       final bytes = await _renderCard();
       await Gal.putImageBytes(bytes,
           name: 'anon_invite_${widget.link.shareCode}');
