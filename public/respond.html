@@ -81,22 +81,8 @@
     .state { display: none; }
     .state.active { display: flex; flex-direction: column; }
 
-    /* ── Loading ── */
-    #loading {
-      align-items: center;
-      justify-content: center;
-      min-height: 60dvh;
-      gap: 14px;
-    }
-
-    .spinner {
-      width: 36px; height: 36px;
-      border: 2.5px solid var(--border);
-      border-top-color: var(--primary);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    /* ── Loading (invisible — just hides content while fetching) ── */
+    #loading { display: none !important; }
 
     /* ── Error ── */
     #error-state {
@@ -496,12 +482,6 @@
 
   <div class="page">
 
-    <!-- Loading -->
-    <div id="loading" class="state active">
-      <div class="spinner"></div>
-      <span style="color:var(--subtext2);font-size:13px;font-weight:500;">Loading…</span>
-    </div>
-
     <!-- Error -->
     <div id="error-state" class="state">
       <div class="error-icon">😕</div>
@@ -661,13 +641,10 @@
 
     function show(id) {
       document.querySelectorAll('.state').forEach(el => el.classList.remove('active'));
-      const el = document.getElementById(id);
-      el.classList.add('active');
-      if (id === 'loading') el.style.display = 'flex';
+      document.getElementById(id).classList.add('active');
     }
 
     async function load() {
-      show('loading');
       try {
         const res = await fetch(`/api/r/${code}`);
         const data = await res.json();
