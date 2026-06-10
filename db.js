@@ -28,8 +28,13 @@ module.exports = {
     const snap = await fs().collection('links').where('userId', '==', userId).get();
     const links = await Promise.all(
       snap.docs.map(async (doc) => {
-        const countSnap = await fs().collection('responses').where('linkId', '==', doc.id).get();
-        return { id: doc.id, ...doc.data(), responseCount: countSnap.size };
+        const [allSnap, readSnap] = await Promise.all([
+          fs().collection('responses').where('linkId', '==', doc.id).get(),
+          fs().collection('responses').where('linkId', '==', doc.id).where('isRead', '==', true).get(),
+        ]);
+        const responseCount = allSnap.size;
+        const unreadCount = responseCount - readSnap.size;
+        return { id: doc.id, ...doc.data(), responseCount, unreadCount };
       })
     );
     return links.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -69,6 +74,14 @@ module.exports = {
     return snap.docs
       .map((doc) => ({ id: doc.id, ...doc.data() }))
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  },
+
+  markAllRead: async (linkId) => {
+    const snap = await fs().collection('responses').where('linkId', '==', linkId).get();
+    if (snap.empty) return;
+    const batch = fs().batch();
+    snap.docs.forEach((doc) => batch.update(doc.ref, { isRead: true }));
+    await batch.commit();
   },
 
   addResponse: async (response) => {

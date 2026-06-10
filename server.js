@@ -211,6 +211,13 @@ app.get('/api/links/:id/responses', auth, wrap(async (req, res) => {
   res.json({ responses });
 }));
 
+app.put('/api/links/:id/mark-read', auth, wrap(async (req, res) => {
+  const link = await db.findLinkById(req.params.id);
+  if (!link || link.userId !== req.user.id) return res.status(404).json({ error: 'Not found' });
+  await db.markAllRead(req.params.id);
+  res.json({ ok: true });
+}));
+
 app.post('/api/links/:linkId/responses/:responseId/reply', auth, wrap(async (req, res) => {
   const { reply } = req.body || {};
   if (!reply?.trim()) return res.status(400).json({ error: 'Reply cannot be empty' });
