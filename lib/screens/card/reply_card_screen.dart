@@ -530,29 +530,23 @@ class _AvatarUsername extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (avatarBase64 != null) ...[
-          ClipOval(
-            child: Image.memory(
-              base64Decode(avatarBase64!),
-              width: size,
-              height: size,
-              fit: BoxFit.cover,
-            ),
-          ),
-          const SizedBox(width: 5),
-        ],
-        Text(
-          '@$username',
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.35),
-            fontSize: size * 0.55,
-            fontWeight: FontWeight.w600,
-          ),
+    if (avatarBase64 != null) {
+      return ClipOval(
+        child: Image.memory(
+          base64Decode(avatarBase64!),
+          width: 34,
+          height: 34,
+          fit: BoxFit.cover,
         ),
-      ],
+      );
+    }
+    return Text(
+      '@$username',
+      style: TextStyle(
+        color: Colors.white.withValues(alpha: 0.35),
+        fontSize: size * 0.55,
+        fontWeight: FontWeight.w600,
+      ),
     );
   }
 }
