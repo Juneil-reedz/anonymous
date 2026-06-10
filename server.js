@@ -31,13 +31,25 @@ const db = require('./db');
 async function sendPushNotification(userId, title, body, data = {}) {
   try {
     const user = await db.findUserById(userId);
-    if (!user?.fcmToken) return;
-    await admin.messaging().send({
+    if (!user?.fcmToken) {
+      console.log(`No FCM token for user ${userId} — skipping push`);
+      return;
+    }
+    const result = await admin.messaging().send({
       token: user.fcmToken,
       notification: { title, body },
-      data,
-      android: { priority: 'high' },
+      data: { ...data, click_action: 'FLUTTER_NOTIFICATION_CLICK' },
+      android: {
+        priority: 'high',
+        notification: {
+          channelId: 'anon_responses',   // must match channel created in Flutter
+          sound: 'anonymous_notification',
+          defaultSound: false,
+          notificationCount: 1,
+        },
+      },
     });
+    console.log('Push sent:', result);
   } catch (e) {
     console.warn('Push notification failed:', e.message);
   }
