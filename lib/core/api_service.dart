@@ -46,6 +46,22 @@ class ApiService {
     }
   }
 
+  static Future<Map<String, dynamic>> put(String path, Map<String, dynamic> body) async {
+    try {
+      final res = await http.put(
+        Uri.parse('$baseUrl$path'),
+        headers: _headers,
+        body: json.encode(body),
+      ).timeout(const Duration(seconds: 15));
+      final data = json.decode(res.body) as Map<String, dynamic>;
+      if (res.statusCode >= 400) throw data['error'] ?? 'Request failed';
+      return data;
+    } catch (e) {
+      debugPrint('PUT $path error: $e');
+      rethrow;
+    }
+  }
+
   static Future<Map<String, dynamic>> delete(String path) async {
     try {
       final res = await http.delete(

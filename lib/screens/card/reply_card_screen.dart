@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -8,10 +9,12 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gal/gal.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../core/theme.dart';
 import '../../core/web_utils.dart';
 import '../../models/prompt_model.dart';
+import '../../providers/app_provider.dart';
 
 enum _CardStyle { verdict, contrast, receipt }
 
@@ -133,6 +136,7 @@ class _ReplyCardScreenState extends State<ReplyCardScreen> {
     final template = widget.link.template;
     final screenW = MediaQuery.of(context).size.width;
     final cardW = (screenW - 48).clamp(0.0, 400.0);
+    final avatarBase64 = context.read<AppProvider>().user?.avatarBase64;
 
     return Scaffold(
       backgroundColor: AnonTheme.bg,
@@ -222,7 +226,7 @@ class _ReplyCardScreenState extends State<ReplyCardScreen> {
                 key: _cardKey,
                 child: Padding(
                   padding: const EdgeInsets.all(12),
-                  child: _buildCard(cardW, template),
+                  child: _buildCard(cardW, template, avatarBase64),
                 ),
               ),
             ).animate().fadeIn(delay: 100.ms),
@@ -341,17 +345,17 @@ class _ReplyCardScreenState extends State<ReplyCardScreen> {
     );
   }
 
-  Widget _buildCard(double width, PromptTemplate template) {
+  Widget _buildCard(double width, PromptTemplate template, String? avatarBase64) {
     switch (_style) {
       case _CardStyle.verdict:
         return _VerdictCard(
-            response: widget.response, link: widget.link, width: width);
+            response: widget.response, link: widget.link, width: width, avatarBase64: avatarBase64);
       case _CardStyle.contrast:
         return _ContrastCard(
-            response: widget.response, link: widget.link, width: width);
+            response: widget.response, link: widget.link, width: width, avatarBase64: avatarBase64);
       case _CardStyle.receipt:
         return _ReceiptCard(
-            response: widget.response, link: widget.link, width: width);
+            response: widget.response, link: widget.link, width: width, avatarBase64: avatarBase64);
     }
   }
 }
@@ -515,15 +519,54 @@ class _IgIcon extends StatelessWidget {
   }
 }
 
+// ─── Reusable avatar + username widget for card headers ──────────────────────
+
+class _AvatarUsername extends StatelessWidget {
+  final String username;
+  final String? avatarBase64;
+  final double size;
+
+  const _AvatarUsername({required this.username, this.avatarBase64, this.size = 20});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (avatarBase64 != null) ...[
+          ClipOval(
+            child: Image.memory(
+              base64Decode(avatarBase64!),
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+            ),
+          ),
+          const SizedBox(width: 5),
+        ],
+        Text(
+          '@$username',
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.35),
+            fontSize: size * 0.55,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 // ─── Style 1: VERDICT ────────────────────────────────────────────────────────
 
 class _VerdictCard extends StatelessWidget {
   final AnonResponse response;
   final PromptLink link;
   final double width;
+  final String? avatarBase64;
 
   const _VerdictCard(
-      {required this.response, required this.link, required this.width});
+      {required this.response, required this.link, required this.width, this.avatarBase64});
 
   @override
   Widget build(BuildContext context) {
@@ -582,10 +625,7 @@ class _VerdictCard extends StatelessWidget {
                             letterSpacing: 1),
                       ),
                       const Spacer(),
-                      Text('@${link.username}',
-                          style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.35),
-                              fontSize: 11)),
+                      _AvatarUsername(username: link.username, avatarBase64: avatarBase64, size: 20),
                     ],
                   ),
                   SizedBox(height: width * 0.06),
@@ -687,9 +727,10 @@ class _ContrastCard extends StatelessWidget {
   final AnonResponse response;
   final PromptLink link;
   final double width;
+  final String? avatarBase64;
 
   const _ContrastCard(
-      {required this.response, required this.link, required this.width});
+      {required this.response, required this.link, required this.width, this.avatarBase64});
 
   @override
   Widget build(BuildContext context) {
@@ -737,8 +778,7 @@ class _ContrastCard extends StatelessWidget {
                                 fontWeight: FontWeight.w700)),
                       ),
                       const Spacer(),
-                      Icon(template.icon,
-                          color: Colors.white.withValues(alpha: 0.2), size: 18),
+                      _AvatarUsername(username: link.username, avatarBase64: avatarBase64, size: 20),
                     ],
                   ),
                   SizedBox(height: width * 0.05),
@@ -815,9 +855,10 @@ class _ReceiptCard extends StatelessWidget {
   final AnonResponse response;
   final PromptLink link;
   final double width;
+  final String? avatarBase64;
 
   const _ReceiptCard(
-      {required this.response, required this.link, required this.width});
+      {required this.response, required this.link, required this.width, this.avatarBase64});
 
   @override
   Widget build(BuildContext context) {
@@ -861,12 +902,18 @@ class _ReceiptCard extends StatelessWidget {
                         letterSpacing: 1),
                   ),
                   const Spacer(),
-                  Text('RECEIPT',
-                      style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          fontSize: 10,
-                          letterSpacing: 1.5,
-                          fontWeight: FontWeight.w700)),
+                  if (avatarBase64 != null)
+                    ClipOval(
+                      child: Image.memory(base64Decode(avatarBase64!),
+                          width: 24, height: 24, fit: BoxFit.cover),
+                    )
+                  else
+                    Text('RECEIPT',
+                        style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.5),
+                            fontSize: 10,
+                            letterSpacing: 1.5,
+                            fontWeight: FontWeight.w700)),
                 ],
               ),
             ),

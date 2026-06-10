@@ -305,22 +305,39 @@ class AnonUser {
   final String id;
   final String username;
   final String displayName;
+  final String? avatarBase64;
 
   const AnonUser({
     required this.id,
     required this.username,
     required this.displayName,
+    this.avatarBase64,
   });
+
+  AnonUser copyWith({
+    String? id,
+    String? username,
+    String? displayName,
+    String? avatarBase64,
+  }) =>
+      AnonUser(
+        id: id ?? this.id,
+        username: username ?? this.username,
+        displayName: displayName ?? this.displayName,
+        avatarBase64: avatarBase64 ?? this.avatarBase64,
+      );
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'username': username,
         'displayName': displayName,
+        if (avatarBase64 != null) 'avatarBase64': avatarBase64,
       };
 
   factory AnonUser.fromJson(Map<String, dynamic> json) => AnonUser(
         id: json['id'] as String,
         username: json['username'] as String,
         displayName: json['displayName'] as String,
+        avatarBase64: json['avatarBase64'] as String?,
       );
 }

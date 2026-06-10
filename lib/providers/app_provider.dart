@@ -207,6 +207,25 @@ class AppProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> updateProfile({String? displayName, String? avatarBase64}) async {
+    try {
+      final body = <String, dynamic>{};
+      if (displayName != null) body['displayName'] = displayName.trim();
+      if (avatarBase64 != null) body['avatarBase64'] = avatarBase64;
+      final data = await ApiService.put('/api/profile', body);
+      final userMap = data['user'] as Map<String, dynamic>;
+      _user = AnonUser.fromJson(userMap);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_userKey, json.encode(_user!.toJson()));
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
   Future<void> refresh() => _fetchLinks();
 
   void clearError() {

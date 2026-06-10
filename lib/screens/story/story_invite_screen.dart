@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -8,10 +9,12 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gal/gal.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../core/theme.dart';
 import '../../core/web_utils.dart';
 import '../../models/prompt_model.dart';
+import '../../providers/app_provider.dart';
 
 class StoryInviteScreen extends StatefulWidget {
   final PromptLink link;
@@ -26,6 +29,7 @@ class _StoryInviteScreenState extends State<StoryInviteScreen> {
   final _cardKey = GlobalKey();
   bool _sharing = false;
   bool _saving = false;
+  String? _avatarBase64;
 
   String get _url =>
       'https://anonymous-backend-0nnv.onrender.com/r/${widget.link.shareCode}';
@@ -129,6 +133,7 @@ class _StoryInviteScreenState extends State<StoryInviteScreen> {
 
   @override
   Widget build(BuildContext context) {
+    _avatarBase64 = context.read<AppProvider>().user?.avatarBase64;
     final template = widget.link.template;
     final screenW = MediaQuery.of(context).size.width;
     final cardW = (screenW - 48).clamp(0.0, 380.0);
@@ -172,6 +177,7 @@ class _StoryInviteScreenState extends State<StoryInviteScreen> {
                   width: cardW,
                   height: cardH,
                   url: _url,
+                  avatarBase64: _avatarBase64,
                 ),
               ),
             ).animate().fadeIn(delay: 100.ms).scale(begin: const Offset(0.95, 0.95)),
@@ -319,6 +325,7 @@ class _InviteCard extends StatelessWidget {
   final double width;
   final double height;
   final String url;
+  final String? avatarBase64;
 
   const _InviteCard({
     required this.template,
@@ -326,6 +333,7 @@ class _InviteCard extends StatelessWidget {
     required this.width,
     required this.height,
     required this.url,
+    this.avatarBase64,
   });
 
   @override
@@ -419,6 +427,17 @@ class _InviteCard extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
+                  if (avatarBase64 != null) ...[
+                    ClipOval(
+                      child: Image.memory(
+                        base64Decode(avatarBase64!),
+                        width: 28,
+                        height: 28,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                  ],
                   Text(
                     '@${link.username}',
                     style: TextStyle(

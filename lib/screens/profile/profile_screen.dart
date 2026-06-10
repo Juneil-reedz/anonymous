@@ -1,6 +1,9 @@
-﻿import 'dart:math';
+﻿import 'dart:convert';
+import 'dart:math';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme.dart';
 import '../../providers/app_provider.dart';
@@ -134,14 +137,89 @@ class ProfileScreen extends StatelessWidget {
 
 // â”€â”€â”€ Profile header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-class _ProfileHeader extends StatelessWidget {
+class _ProfileHeader extends StatefulWidget {
   final dynamic user;
   final AppProvider provider;
 
   const _ProfileHeader({required this.user, required this.provider});
 
   @override
+  State<_ProfileHeader> createState() => _ProfileHeaderState();
+}
+
+class _ProfileHeaderState extends State<_ProfileHeader> {
+  bool _saving = false;
+
+  Future<void> _pickAvatar() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 400,
+      maxHeight: 400,
+      imageQuality: 80,
+    );
+    if (picked == null || !mounted) return;
+    final bytes = await picked.readAsBytes();
+    setState(() => _saving = true);
+    await widget.provider.updateProfile(avatarBase64: base64Encode(bytes));
+    if (mounted) setState(() => _saving = false);
+  }
+
+  Future<void> _editDisplayName() async {
+    final controller =
+        TextEditingController(text: widget.user.displayName as String);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AnonTheme.surface,
+        title: const Text('Edit Display Name',
+            style: TextStyle(
+                color: AnonTheme.primary, fontWeight: FontWeight.w800)),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLength: 40,
+          style: const TextStyle(color: AnonTheme.primary),
+          decoration: InputDecoration(
+            hintText: 'Your display name',
+            hintStyle: const TextStyle(color: AnonTheme.subtext),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AnonTheme.cardBorder),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AnonTheme.primaryLight),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel',
+                style: TextStyle(color: AnonTheme.subtext)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('Save',
+                style: TextStyle(
+                    color: AnonTheme.primaryLight,
+                    fontWeight: FontWeight.w800)),
+          ),
+        ],
+      ),
+    );
+    if (result == null || result.isEmpty || !mounted) return;
+    setState(() => _saving = true);
+    await widget.provider.updateProfile(displayName: result);
+    if (mounted) setState(() => _saving = false);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final user = widget.user;
+    final String? avatarBase64 = user.avatarBase64 as String?;
+
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
@@ -170,11 +248,50 @@ class _ProfileHeader extends StatelessWidget {
 
               const SizedBox(height: 28),
 
-              // Wax seal avatar
-              WaxSealAvatar(
-                letter: user.displayName[0].toUpperCase(),
-                username: user.username,
-                size: 110,
+              // Avatar with camera overlay
+              Stack(
+                children: [
+                  if (avatarBase64 != null)
+                    ClipOval(
+                      child: Image.memory(
+                        base64Decode(avatarBase64),
+                        width: 110,
+                        height: 110,
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                  else
+                    WaxSealAvatar(
+                      letter: (user.displayName as String)[0].toUpperCase(),
+                      username: user.username as String,
+                      size: 110,
+                    ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: GestureDetector(
+                      onTap: _saving ? null : _pickAvatar,
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: AnonTheme.primaryLight,
+                          shape: BoxShape.circle,
+                          border:
+                              Border.all(color: AnonTheme.surface, width: 2),
+                        ),
+                        child: _saving
+                            ? const Padding(
+                                padding: EdgeInsets.all(6),
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.black),
+                              )
+                            : const Icon(Icons.camera_alt_rounded,
+                                color: Colors.black, size: 16),
+                      ),
+                    ),
+                  ),
+                ],
               )
                   .animate()
                   .scale(
@@ -185,15 +302,26 @@ class _ProfileHeader extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // Display name
-              Text(
-                user.displayName,
-                style: const TextStyle(
-                  color: AnonTheme.primary,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.3,
-                ),
+              // Display name with edit pencil
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    user.displayName as String,
+                    style: const TextStyle(
+                      color: AnonTheme.primary,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: _saving ? null : _editDisplayName,
+                    child: const Icon(Icons.edit_rounded,
+                        color: AnonTheme.subtext, size: 18),
+                  ),
+                ],
               ).animate().fadeIn(delay: 200.ms),
 
               const SizedBox(height: 6),
@@ -215,7 +343,7 @@ class _ProfileHeader extends StatelessWidget {
                         color: AnonTheme.primaryLight, size: 14),
                     const SizedBox(width: 5),
                     Text(
-                      user.username,
+                      user.username as String,
                       style: const TextStyle(
                         color: AnonTheme.primaryLight,
                         fontWeight: FontWeight.w700,
