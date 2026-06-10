@@ -185,20 +185,7 @@ class _PromptTypeSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(24, 32, 24, 16),
-          child: Row(
-            children: [
-              _SectionLabel('PROMPT TYPES'),
-              Spacer(),
-              Text(
-                'scroll →',
-                style: TextStyle(
-                    color: AnonTheme.subtext, fontSize: 11, letterSpacing: 1),
-              ),
-            ],
-          ),
-        ),
+        const SizedBox(height: 32),
         SizedBox(
           height: 100,
           child: ListView.separated(
