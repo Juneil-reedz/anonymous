@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -9,6 +10,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../core/theme.dart';
+import '../../core/web_utils.dart';
 import '../../models/prompt_model.dart';
 
 enum _CardStyle { verdict, contrast, receipt }
@@ -46,6 +48,11 @@ class _ReplyCardScreenState extends State<ReplyCardScreen> {
     setState(() => _sharing = true);
     try {
       final bytes = await _renderCard();
+      if (kIsWeb) {
+        await shareImageOnWeb(bytes, 'anon_reply_${widget.response.id}.png');
+        if (mounted) setState(() => _sharing = false);
+        return;
+      }
       final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/anon_reply_${widget.response.id}.png');
       await file.writeAsBytes(bytes);
@@ -64,8 +71,21 @@ class _ReplyCardScreenState extends State<ReplyCardScreen> {
     setState(() => _saving = true);
     try {
       final bytes = await _renderCard();
-      await Gal.putImageBytes(bytes,
-          name: 'anon_reply_${widget.response.id}');
+      if (kIsWeb) {
+        await saveImageOnWeb(bytes, 'anon_reply_${widget.response.id}.png');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Image opened — long-press it and tap Save to Photos.'),
+              backgroundColor: Color(0xFF059669),
+            ),
+          );
+        }
+        return;
+      }
+      final hasAccess = await Gal.hasAccess();
+      if (!hasAccess) await Gal.requestAccess();
+      await Gal.putImageBytes(bytes, name: 'anon_reply_${widget.response.id}');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -475,8 +495,6 @@ class _VerdictCard extends StatelessWidget {
                   ),
 
                   SizedBox(height: width * 0.06),
-                  _LinkZone(color: color, width: width),
-                  SizedBox(height: width * 0.04),
                   Center(
                     child: Text('anonymous. • no names, no traces',
                         style: TextStyle(
@@ -612,8 +630,6 @@ class _ContrastCard extends StatelessWidget {
                       height: 1.4,
                     ),
                   ),
-                  SizedBox(height: width * 0.05),
-                  _LinkZone(color: Colors.white, width: width),
                 ],
               ),
             ),
@@ -779,8 +795,6 @@ class _ReceiptCard extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: width * 0.06),
-                  _LinkZone(color: color, width: width),
-                  SizedBox(height: width * 0.03),
                   Center(
                     child: Text('anonymous. • your truth, unfiltered',
                         style: TextStyle(
@@ -797,44 +811,3 @@ class _ReceiptCard extends StatelessWidget {
   }
 }
 
-// ─── Shared link placeholder zone ─────────────────────────────────────────────
-
-class _LinkZone extends StatelessWidget {
-  final Color color;
-  final double width;
-
-  const _LinkZone({required this.color, required this.width});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding:
-          EdgeInsets.symmetric(horizontal: width * 0.04, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-            color: color.withValues(alpha: 0.45),
-            width: 1.5,
-            strokeAlign: BorderSide.strokeAlignInside),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.link_rounded,
-              color: color.withValues(alpha: 0.7), size: 15),
-          const SizedBox(width: 7),
-          Text(
-            'PASTE LINK HERE',
-            style: TextStyle(
-                color: color.withValues(alpha: 0.7),
-                fontSize: 10,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 2),
-          ),
-        ],
-      ),
-    );
-  }
-}
