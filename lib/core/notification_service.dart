@@ -41,12 +41,18 @@ class NotificationService {
     const initSettings = InitializationSettings(android: androidInit);
     await _local.initialize(initSettings);
 
-    // Create notification channel
-    const channel = AndroidNotificationChannel(
+    // Custom sound — file lives in android/app/src/main/res/raw/
+    const customSound = RawResourceAndroidNotificationSound('anonymous_notification');
+
+    // Create notification channel with custom sound + heads-up importance
+    final channel = AndroidNotificationChannel(
       _channelId,
       _channelName,
       description: 'Notifies you when someone sends an anonymous response',
       importance: Importance.high,
+      sound: customSound,
+      playSound: true,
+      enableVibration: true,
     );
     await _local
         .resolvePlatformSpecificImplementation<
@@ -68,6 +74,13 @@ class NotificationService {
             icon: '@mipmap/ic_launcher',
             importance: Importance.high,
             priority: Priority.high,
+            sound: customSound,
+            playSound: true,
+            enableVibration: true,
+            // Heads-up / messenger-style popup
+            fullScreenIntent: false,
+            styleInformation: const BigTextStyleInformation(''),
+            ticker: 'New anonymous response',
           ),
         ),
       );
