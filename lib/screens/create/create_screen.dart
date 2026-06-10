@@ -419,7 +419,15 @@ class _TemplateCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Text(template.emoji, style: const TextStyle(fontSize: 28)),
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: template.color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(template.icon, color: template.color, size: 24),
+            ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -535,7 +543,15 @@ class _LinkCreatedView extends StatelessWidget {
             ),
             child: Column(
               children: [
-                Text(template.emoji, style: const TextStyle(fontSize: 40)),
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: template.color.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Icon(template.icon, color: template.color, size: 36),
+                ),
                 const SizedBox(height: 10),
                 Text(
                   template.title,
