@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:flutter/foundation.dart' show Uint8List, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -7,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../core/theme.dart';
+import '../../core/web_file_picker.dart';
 import '../../models/prompt_model.dart';
 import '../../providers/app_provider.dart';
 import '../intro_screen.dart';
@@ -258,16 +260,23 @@ class _ProfileHeaderState extends State<_ProfileHeader> {
 
   Future<void> _pickAvatar() async {
     try {
-      final picker = ImagePicker();
-      final picked = await picker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 400,
-        maxHeight: 400,
-        imageQuality: 80,
-      );
-      if (picked == null || !mounted) return;
-      final bytes = await picked.readAsBytes();
-      if (!mounted) return;
+      Uint8List? bytes;
+
+      if (kIsWeb) {
+        bytes = await pickImageWeb();
+      } else {
+        final picker = ImagePicker();
+        final picked = await picker.pickImage(
+          source: ImageSource.gallery,
+          maxWidth: 400,
+          maxHeight: 400,
+          imageQuality: 80,
+        );
+        if (picked == null) return;
+        bytes = await picked.readAsBytes();
+      }
+
+      if (bytes == null || !mounted) return;
       setState(() => _saving = true);
       final ok = await widget.provider.updateProfile(avatarBase64: base64Encode(bytes));
       if (mounted) {
@@ -1066,6 +1075,7 @@ class _ProfileCardStack extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: saving ? null : onTap,
+      behavior: HitTestBehavior.opaque,
       child: SizedBox(
         width: 210,
         height: 200,
